@@ -1,84 +1,81 @@
-// Configuración de Firebase
+// Importar las funciones necesarias desde Firebase SDK
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+
+// Configuración de tu aplicación Firebase
 const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_AUTH_DOMAIN",
-    projectId: "TU_PROJECT_ID",
-    storageBucket: "TU_STORAGE_BUCKET",
-    messagingSenderId: "TU_MESSAGING_SENDER_ID",
-    appId: "TU_APP_ID"
+  apiKey: "AIzaSyBd0eUjzBBxKt3mc8cKq-HEhyfd3AHuffY",
+  authDomain: "kaic-studio.firebaseapp.com",
+  projectId: "kaic-studio",
+  storageBucket: "kaic-studio.appspot.com",
+  messagingSenderId: "705458456255",
+  appId: "1:705458456255:web:aaa371d4ad295d4ea5e80a",
+  measurementId: "G-3CS1GT46BV"
 };
-const app = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
 
-// Elementos de la interfaz
-const statusDiv = document.getElementById("status");
-const registerForm = document.getElementById("registerForm");
-const loginForm = document.getElementById("loginForm");
-const updateForm = document.getElementById("updateForm");
-const newUserName = document.getElementById("newUserName");
-const newEmail = document.getElementById("newEmail");
-const newPassword = document.getElementById("newPassword");
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
-// Registrar usuario
-registerForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const email = document.getElementById("registerEmail").value;
-    const password = document.getElementById("registerPassword").value;
+// Obtener referencias de los servicios de Firebase
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-    auth.createUserWithEmailAndPassword(email, password)
-        .then(userCredential => {
-            statusDiv.innerHTML = "Usuario registrado con éxito";
-            registerForm.reset();
-        })
-        .catch(error => {
-            statusDiv.innerHTML = error.message;
-        });
-});
+// Funciones para autenticación
+function registerUser(email, password) {
+  createUserWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      console.log("Usuario registrado:", userCredential.user);
+    })
+    .catch((error) => {
+      console.error("Error al registrar el usuario:", error.message);
+    });
+}
 
-// Iniciar sesión
-loginForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const email = document.getElementById("loginEmail").value;
-    const password = document.getElementById("loginPassword").value;
+function loginUser(email, password) {
+  signInWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      console.log("Usuario iniciado sesión:", userCredential.user);
+    })
+    .catch((error) => {
+      console.error("Error al iniciar sesión:", error.message);
+    });
+}
 
-    auth.signInWithEmailAndPassword(email, password)
-        .then(userCredential => {
-            statusDiv.innerHTML = "Bienvenido, " + userCredential.user.email;
-            loginForm.style.display = "none";
-            updateForm.style.display = "block"; // Mostrar formulario de actualización
-        })
-        .catch(error => {
-            statusDiv.innerHTML = error.message;
-        });
-});
+function logoutUser() {
+  signOut(auth)
+    .then(() => {
+      console.log("Usuario cerrado sesión");
+    })
+    .catch((error) => {
+      console.error("Error al cerrar sesión:", error.message);
+    });
+}
 
-// Cambiar datos de usuario
-updateForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const user = auth.currentUser;
+// Funciones para Firestore
+function saveDataToFirestore(collection, documentId, data) {
+  setDoc(doc(db, collection, documentId), data)
+    .then(() => {
+      console.log("Documento guardado con éxito");
+    })
+    .catch((error) => {
+      console.error("Error al guardar el documento:", error.message);
+    });
+}
 
-    // Cambiar nombre de usuario, correo y contraseña
-    const newEmailValue = newEmail.value;
-    const newPasswordValue = newPassword.value;
+function getDataFromFirestore(collection, documentId) {
+  getDoc(doc(db, collection, documentId))
+    .then((docSnap) => {
+      if (docSnap.exists()) {
+        console.log("Documento obtenido:", docSnap.data());
+      } else {
+        console.log("No se encontró el documento");
+      }
+    })
+    .catch((error) => {
+      console.error("Error al obtener el documento:", error.message);
+    });
+}
 
-    if (newEmailValue) {
-        user.updateEmail(newEmailValue)
-            .then(() => {
-                statusDiv.innerHTML = "Correo electrónico actualizado";
-            })
-            .catch(error => {
-                statusDiv.innerHTML = error.message;
-            });
-    }
-
-    if (newPasswordValue) {
-        user.updatePassword(newPasswordValue)
-            .then(() => {
-                statusDiv.innerHTML = "Contraseña actualizada";
-            })
-            .catch(error => {
-                statusDiv.innerHTML = error.message;
-            });
-    }
-});
